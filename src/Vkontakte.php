@@ -114,6 +114,7 @@ class Vkontakte extends AbstractProvider
 
     /**
      * @param string $language
+     * @return Vkontakte
      */
     public function setLanguage($language)
     {
@@ -126,10 +127,12 @@ class Vkontakte extends AbstractProvider
     {
         return "$this->baseOAuthUri/authorize";
     }
+
     public function getBaseAccessTokenUrl(array $params)
     {
         return "$this->baseOAuthUri/access_token";
     }
+
     public function getResourceOwnerDetailsUrl(AccessToken $token)
     {
         $params = [
@@ -143,10 +146,12 @@ class Vkontakte extends AbstractProvider
 
         return $url;
     }
+
     protected function getDefaultScopes()
     {
         return $this->scopes;
     }
+
     protected function checkResponse(ResponseInterface $response, $data)
     {
         // Metadata info
@@ -176,6 +181,7 @@ class Vkontakte extends AbstractProvider
             throw new IdentityProviderException($errorMessage, $errorCode, $data);
         }
     }
+
     protected function createResourceOwner(array $response, AccessToken $token)
     {
         $response   = reset($response['response']);
@@ -190,7 +196,7 @@ class Vkontakte extends AbstractProvider
             $response['id'] = $additional['user_id'];
         }
 
-        return new User($response, $response['id']);
+        return new VkontakteResourceOwner($response);
     }
 
     /**
@@ -200,7 +206,7 @@ class Vkontakte extends AbstractProvider
      * @param AccessToken|null $token Current user if empty
      * @param array            $params
      *
-     * @return User[]
+     * @return VkontakteResourceOwner[]
      */
     public function usersGet(array $ids = [], AccessToken $token = null, array $params = [])
     {
@@ -222,11 +228,12 @@ class Vkontakte extends AbstractProvider
         $response   = $this->getResponse($this->createRequest(static::METHOD_GET, $url, $token, []))['response'];
         $users      = !empty($response['items']) ? $response['items'] : $response;
         $array2user = function ($userData) {
-            return new User($userData);
+            return new VkontakteResourceOwner($userData);
         };
 
         return array_map($array2user, $users);
     }
+
     /**
      * @see https://vk.com/dev/friends.get
      *
@@ -234,7 +241,7 @@ class Vkontakte extends AbstractProvider
      * @param AccessToken|null $token
      * @param array            $params
      *
-     * @return User[]
+     * @return VkontakteResourceOwner[]
      */
     public function friendsGet($userId, AccessToken $token = null, array $params = [])
     {
@@ -256,7 +263,7 @@ class Vkontakte extends AbstractProvider
                 $friendData = ['id' => $friendData];
             }
 
-            return new User($friendData);
+            return new VkontakteResourceOwner($friendData);
         };
 
         return array_map($array2friend, $friends);
